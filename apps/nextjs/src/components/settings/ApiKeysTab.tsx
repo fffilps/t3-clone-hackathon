@@ -32,7 +32,7 @@ const ApiKeysTab = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchApiKeys();
+    void fetchApiKeys();
   }, [user]);
 
   const fetchApiKeys = async () => {
@@ -66,8 +66,12 @@ const ApiKeysTab = () => {
           openrouter_api_key: openRouterData?.api_key_encrypted ?? "",
         });
       }
-    } catch (error: any) {
-      console.error("Error fetching API keys:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error fetching API keys:", message);
     }
   };
 
@@ -120,10 +124,14 @@ const ApiKeysTab = () => {
         title: "API Key Saved",
         description: `Your ${provider.charAt(0).toUpperCase() + provider.slice(1)} API key has been saved securely.`,
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -176,10 +184,14 @@ const ApiKeysTab = () => {
         title: "API Key Deleted",
         description: `Your ${provider.charAt(0).toUpperCase() + provider.slice(1)} API key has been removed.`,
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import ChatInterface from "@/components/ChatInterface";
 import Sidebar from "@/components/Sidebar";
 import { toast } from "@/components/ui/use-toast";

@@ -10,7 +10,6 @@ import { Check, Copy, Edit, ThumbsDown, ThumbsUp } from "lucide-react";
 interface MessageActionsProps {
   messageId: string;
   content: string;
-  contextId: string;
   thumbsUp?: number;
   thumbsDown?: number;
   onEdit?: (messageId: string) => void;
@@ -19,7 +18,6 @@ interface MessageActionsProps {
 const MessageActions = ({
   messageId,
   content,
-  contextId,
   thumbsUp = 0,
   thumbsDown = 0,
   onEdit,

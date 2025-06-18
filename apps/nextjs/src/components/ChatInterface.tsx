@@ -43,8 +43,8 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
 
   useEffect(() => {
     if (contextId) {
-      fetchMessages();
-      fetchSelectedModel();
+      void fetchMessages();
+      void fetchSelectedModel();
     }
   }, [contextId]);
 
@@ -130,11 +130,15 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
         title: "Message updated",
         description: "Your message has been updated successfully.",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message: string }).message
+          : String(error);
       console.error("Error updating message:", error);
       toast({
         title: "Error updating message",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     }
@@ -205,13 +209,23 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
             content: msg.content,
           })),
           model: selectedModel,
-          apiKeys: apiKeys?.reduce(
-            (acc, key) => {
-              acc[key.provider] = key.api_key_encrypted;
-              return acc;
-            },
-            {} as Record<string, string>,
-          ),
+          apiKeys: Array.isArray(apiKeys)
+            ? apiKeys.reduce(
+                (acc, key) => {
+                  if (
+                    key &&
+                    typeof key === "object" &&
+                    "provider" in key &&
+                    "api_key_encrypted" in key
+                  ) {
+                    acc[key.provider as string] =
+                      key.api_key_encrypted as string;
+                  }
+                  return acc;
+                },
+                {} as Record<string, string>,
+              )
+            : undefined,
         }),
       });
 
@@ -320,7 +334,6 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
                         <MessageActions
                           messageId={message.id}
                           content={message.content}
-                          contextId={contextId}
                           thumbsUp={message.thumbs_up ?? 0}
                           thumbsDown={message.thumbs_down ?? 0}
                         />
@@ -333,7 +346,6 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
                         <MessageActions
                           messageId={message.id}
                           content={message.content}
-                          contextId={contextId}
                           thumbsUp={message.thumbs_up ?? 0}
                           thumbsDown={message.thumbs_down ?? 0}
                           onEdit={handleEdit}

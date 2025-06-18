@@ -34,9 +34,13 @@ const Auth = () => {
     const { error } = await signIn(email, password);
 
     if (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } else {
@@ -53,9 +57,13 @@ const Auth = () => {
     const { error } = await signUp(email, password);
 
     if (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } else {

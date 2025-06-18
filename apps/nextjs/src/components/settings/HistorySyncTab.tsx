@@ -1,3 +1,4 @@
+import type { Tables } from "@/integrations/supabase/types";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,11 +12,17 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, DownloadCloud, Trash2 } from "lucide-react";
+import { Download, DownloadCloud } from "lucide-react";
+
+// TODO: Use a proper Context type for chatHistory when available in the Next.js app.
+// import type { Context } from '../../../../apps/expo/types/database';
+// import type { Context } from '../../../expo/types/database';
+const [chatHistory, setChatHistory] = useState<
+  (Tables<"contexts"> & { messages?: Tables<"messages">[] })[]
+>([]);
 
 const HistorySyncTab = () => {
   const { user } = useAuth();
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchChatHistory = async () => {
@@ -35,8 +42,12 @@ const HistorySyncTab = () => {
 
       if (error) throw error;
       setChatHistory(data ?? []);
-    } catch (error: any) {
-      console.error("Error fetching chat history:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error fetching chat history:", message);
       toast({
         title: "Error",
         description: "Failed to load chat history",
@@ -48,7 +59,7 @@ const HistorySyncTab = () => {
   };
 
   useEffect(() => {
-    fetchChatHistory();
+    void fetchChatHistory();
   }, [user]);
 
   const exportChat = async (contextId: string, title: string) => {
@@ -87,8 +98,12 @@ const HistorySyncTab = () => {
         title: "Success",
         description: `Chat "${title}" exported successfully`,
       });
-    } catch (error: any) {
-      console.error("Error exporting chat:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error exporting chat:", message);
       toast({
         title: "Error",
         description: "Failed to export chat",
@@ -127,8 +142,12 @@ const HistorySyncTab = () => {
         title: "Success",
         description: "All chat history exported successfully",
       });
-    } catch (error: any) {
-      console.error("Error exporting all chats:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error exporting all chats:", message);
       toast({
         title: "Error",
         description: "Failed to export chat history",

@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 import { env } from "~/env";
 
+type Message = {
+  role: "user" | "assistant" | "system";
+  content: string;
+};
+
 interface ApiKeyConfig {
   openai?: string;
   anthropic?: string;
@@ -48,7 +53,11 @@ const getModelRoute = (modelId: string, apiKeys: ApiKeyConfig): ModelRoute => {
   return { provider: "openrouter", useDirectApi: false };
 };
 
-const callOpenAI = async (messages: any[], model: string, apiKey: string) => {
+const callOpenAI = async (
+  messages: Message[],
+  model: string,
+  apiKey: string,
+) => {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -68,11 +77,17 @@ const callOpenAI = async (messages: any[], model: string, apiKey: string) => {
   }
 
   const data = await response.json();
+  if (
+    !data.choices ||
+    !Array.isArray(data.choices) ||
+    !data.choices[0]?.message?.content
+  )
+    throw new Error("Invalid response");
   return data.choices[0].message.content;
 };
 
 const callAnthropic = async (
-  messages: any[],
+  messages: Message[],
   model: string,
   apiKey: string,
 ) => {
@@ -95,10 +110,16 @@ const callAnthropic = async (
   }
 
   const data = await response.json();
+  if (!data.content || !Array.isArray(data.content) || !data.content[0]?.text)
+    throw new Error("Invalid response");
   return data.content[0].text;
 };
 
-const callGoogle = async (messages: any[], model: string, apiKey: string) => {
+const callGoogle = async (
+  messages: Message[],
+  model: string,
+  apiKey: string,
+) => {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
@@ -124,11 +145,18 @@ const callGoogle = async (messages: any[], model: string, apiKey: string) => {
   }
 
   const data = await response.json();
+  if (
+    !data.candidates ||
+    !Array.isArray(data.candidates) ||
+    !data.candidates[0]?.content?.parts ||
+    !data.candidates[0].content.parts[0]?.text
+  )
+    throw new Error("Invalid response");
   return data.candidates[0].content.parts[0].text;
 };
 
 const callOpenRouter = async (
-  messages: any[],
+  messages: Message[],
   model: string,
   apiKey: string,
 ) => {
@@ -154,6 +182,12 @@ const callOpenRouter = async (
   }
 
   const data = await response.json();
+  if (
+    !data.choices ||
+    !Array.isArray(data.choices) ||
+    !data.choices[0]?.message?.content
+  )
+    throw new Error("Invalid response");
   return data.choices[0].message.content;
 };
 
@@ -172,7 +206,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Model is required" }, { status: 400 });
     }
 
-    const modelRoute = getModelRoute(model, apiKeys || {});
+    const modelRoute = getModelRoute(model, apiKeys ?? {});
     let response: string;
 
     try {

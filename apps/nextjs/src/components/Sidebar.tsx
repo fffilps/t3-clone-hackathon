@@ -48,7 +48,7 @@ const Sidebar = ({
 
   useEffect(() => {
     if (user) {
-      fetchContexts();
+      void fetchContexts();
     }
   }, [user]);
 

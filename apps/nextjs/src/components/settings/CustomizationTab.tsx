@@ -16,7 +16,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -171,7 +170,7 @@ const CustomizationTab = () => {
   const [customColor, setCustomColor] = useState("#0f172a");
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -201,8 +200,12 @@ const CustomizationTab = () => {
         });
         setCustomColor(data.custom_primary_color ?? "#0f172a");
       }
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error fetching profile:", message);
     }
   };
 
@@ -236,10 +239,14 @@ const CustomizationTab = () => {
         title: "Customization Saved",
         description: "Your preferences have been updated successfully.",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {

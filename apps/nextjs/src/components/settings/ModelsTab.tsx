@@ -103,7 +103,7 @@ const ModelsTab = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchModelPreferences();
+    void fetchModelPreferences();
   }, [user]);
 
   const fetchModelPreferences = async () => {
@@ -132,8 +132,12 @@ const ModelsTab = () => {
       });
 
       setModelPreferences(preferences);
-    } catch (error: any) {
-      console.error("Error fetching model preferences:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error fetching model preferences:", message);
       toast({
         title: "Error",
         description: "Failed to load model preferences.",
@@ -173,11 +177,15 @@ const ModelsTab = () => {
         title: "Preferences Saved",
         description: "Your model preferences have been updated.",
       });
-    } catch (error: any) {
-      console.error("Error saving preferences:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error saving preferences:", message);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -82,7 +82,7 @@ const ModelSelector = ({
 
   useEffect(() => {
     if (user) {
-      fetchModelPreferences();
+      void fetchModelPreferences();
     }
   }, [user]);
 

@@ -27,10 +27,15 @@ export async function POST() {
     }
 
     return NextResponse.redirect(session.url, 303);
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "An error occurred" },
-      { status: err.statusCode || 500 },
-    );
+  } catch (err: unknown) {
+    let message = "An error occurred";
+    let statusCode = 500;
+    if (err && typeof err === "object" && "message" in err) {
+      message = (err as { message: string }).message;
+    }
+    if (err && typeof err === "object" && "statusCode" in err) {
+      statusCode = (err as { statusCode: number }).statusCode;
+    }
+    return NextResponse.json({ error: message }, { status: statusCode });
   }
 }

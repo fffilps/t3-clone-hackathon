@@ -1,4 +1,3 @@
-import type * as SheetPrimitiveType from "@radix-ui/react-dialog";
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { cn } from "@/lib/utils";

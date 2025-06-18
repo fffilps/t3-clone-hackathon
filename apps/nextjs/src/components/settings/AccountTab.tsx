@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { KeyIcon, MailIcon, UserIcon } from "lucide-react";
 
 const AccountTab = () => {
-  const [isPro, setIsPro] = useState(false);
   const { user } = useAuth();
   const [profile, setProfile] = useState({
     preferred_name: "",
@@ -29,7 +28,7 @@ const AccountTab = () => {
   });
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -52,8 +51,12 @@ const AccountTab = () => {
           preferred_name: data.preferred_name ?? "",
         }));
       }
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
+      console.error("Error fetching profile:", message);
     }
   };
 
@@ -73,10 +76,14 @@ const AccountTab = () => {
         title: "Profile Updated",
         description: "Your profile has been saved successfully.",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -112,10 +119,14 @@ const AccountTab = () => {
         title: "Password Updated",
         description: "Your password has been changed successfully.",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? (error as { message?: string }).message
+          : String(error);
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
