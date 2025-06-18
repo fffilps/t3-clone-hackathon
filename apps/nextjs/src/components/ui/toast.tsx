@@ -1,3 +1,4 @@
+import type * as ToastPrimitivesType from "@radix-ui/react-toast";
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { cn } from "@/lib/utils";

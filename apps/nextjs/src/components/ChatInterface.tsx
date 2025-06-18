@@ -86,7 +86,7 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
         return;
       }
 
-      setMessages(data || []);
+      setMessages(data ?? []);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -187,7 +187,7 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
       const { data: apiKeys, error: apiError } = await supabase
         .from("user_api_keys")
         .select("provider, api_key_encrypted")
-        .eq("user_id", user?.id || "");
+        .eq("user_id", user?.id ?? "");
 
       if (apiError) {
         console.error("Error fetching API keys:", apiError);
@@ -321,8 +321,8 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
                           messageId={message.id}
                           content={message.content}
                           contextId={contextId}
-                          thumbsUp={message.thumbs_up || 0}
-                          thumbsDown={message.thumbs_down || 0}
+                          thumbsUp={message.thumbs_up ?? 0}
+                          thumbsDown={message.thumbs_down ?? 0}
                         />
                       </div>
                     )}
@@ -334,8 +334,8 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
                           messageId={message.id}
                           content={message.content}
                           contextId={contextId}
-                          thumbsUp={message.thumbs_up || 0}
-                          thumbsDown={message.thumbs_down || 0}
+                          thumbsUp={message.thumbs_up ?? 0}
+                          thumbsDown={message.thumbs_down ?? 0}
                           onEdit={handleEdit}
                         />
                       </div>

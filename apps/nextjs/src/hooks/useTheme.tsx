@@ -1,11 +1,58 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export const useTheme = () => {
+export type Theme = "dark" | "light" | "system";
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
+}
+
+interface ThemeProviderState {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  applyTheme: (theme: Theme) => void;
+}
+
+const initialState: ThemeProviderState = {
+  theme: "system",
+  setTheme: () => null,
+  applyTheme: () => null,
+};
+
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+  storageKey = "vite-ui-theme",
+  ...props
+}: ThemeProviderProps) {
   const { user } = useAuth();
-  const [theme, setTheme] = useState("modern");
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage?.getItem(storageKey) as Theme) || defaultTheme,
+  );
+
+  const applyTheme = React.useCallback((newTheme: Theme) => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (newTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(newTheme);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -18,228 +65,159 @@ export const useTheme = () => {
         .maybeSingle();
 
       if (data?.selected_theme) {
-        const selectedTheme = data.selected_theme;
+        const selectedTheme = data.selected_theme as Theme;
         setTheme(selectedTheme);
         // Small delay to ensure next-themes has initialized
         setTimeout(() => applyTheme(selectedTheme), 100);
       } else {
         // Apply default theme if no theme is saved
-        setTimeout(() => applyTheme("modern"), 100);
+        setTimeout(() => applyTheme("modern" as Theme), 100);
       }
     };
 
-    fetchTheme();
-  }, [user]);
+    void fetchTheme();
+  }, [user, applyTheme]);
 
-  // Apply theme whenever it changes
   useEffect(() => {
-    if (theme) {
-      // Small delay to ensure next-themes has initialized
-      setTimeout(() => applyTheme(theme), 100);
+    const root = window.document.documentElement;
+
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+
+      root.classList.add(systemTheme);
+      return;
     }
+
+    root.classList.add(theme);
   }, [theme]);
 
-  // Watch for dark/light mode changes and reapply theme
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class"
-        ) {
-          const target = mutation.target as HTMLElement;
-          if (
-            target.classList.contains("dark") ||
-            target.classList.contains("light")
-          ) {
-            // Reapply our custom theme when dark/light mode changes
-            setTimeout(() => applyTheme(theme), 50);
-          }
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, [theme]);
-
-  const applyTheme = (selectedTheme: string) => {
-    const root = document.documentElement;
-    const isDark = root.classList.contains("dark");
-
-    const themeColors = {
-      modern: {
-        light: {
-          primary: "#0f172a",
-          background: "#ffffff",
-          foreground: "#0f172a",
-          accent: "#f1f5f9",
-          secondary: "#f1f5f9",
-          muted: "#f8fafc",
-          card: "#ffffff",
-          border: "#e2e8f0",
-        },
-        dark: {
-          primary: "#f8fafc",
-          background: "#0f172a",
-          foreground: "#f8fafc",
-          accent: "#1e293b",
-          secondary: "#1e293b",
-          muted: "#334155",
-          card: "#1e293b",
-          border: "#334155",
-        },
-      },
-      calming: {
-        light: {
-          primary: "#0369a1",
-          background: "#f0f9ff",
-          foreground: "#0c4a6e",
-          accent: "#e0f2fe",
-          secondary: "#bae6fd",
-          muted: "#f0f9ff",
-          card: "#ffffff",
-          border: "#7dd3fc",
-        },
-        dark: {
-          primary: "#7dd3fc",
-          background: "#0c4a6e",
-          foreground: "#f0f9ff",
-          accent: "#075985",
-          secondary: "#0369a1",
-          muted: "#164e63",
-          card: "#075985",
-          border: "#0284c7",
-        },
-      },
-      grass: {
-        light: {
-          primary: "#15803d",
-          background: "#f0fdf4",
-          foreground: "#14532d",
-          accent: "#dcfce7",
-          secondary: "#bbf7d0",
-          muted: "#f0fdf4",
-          card: "#ffffff",
-          border: "#4ade80",
-        },
-        dark: {
-          primary: "#4ade80",
-          background: "#14532d",
-          foreground: "#f0fdf4",
-          accent: "#166534",
-          secondary: "#15803d",
-          muted: "#16a34a",
-          card: "#166534",
-          border: "#22c55e",
-        },
-      },
-      girly: {
-        light: {
-          primary: "#be185d",
-          background: "#fdf2f8",
-          foreground: "#831843",
-          accent: "#fce7f3",
-          secondary: "#f9a8d4",
-          muted: "#fdf2f8",
-          card: "#ffffff",
-          border: "#f472b6",
-        },
-        dark: {
-          primary: "#f9a8d4",
-          background: "#831843",
-          foreground: "#fdf2f8",
-          accent: "#be185d",
-          secondary: "#ec4899",
-          muted: "#a21caf",
-          card: "#be185d",
-          border: "#f472b6",
-        },
-      },
-    };
-
-    const themeConfig = themeColors[selectedTheme as keyof typeof themeColors];
-    if (themeConfig) {
-      const colors = isDark ? themeConfig.dark : themeConfig.light;
-
-      // Apply colors with higher specificity to override next-themes
-      Object.entries(colors).forEach(([key, value]) => {
-        const hslColor = hexToHsl(value);
-        // Use !important to ensure our colors override the default theme
-        root.style.setProperty(
-          `--${key}`,
-          `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`,
-          "important",
-        );
-      });
-
-      // Set foreground colors with higher specificity
-      root.style.setProperty(
-        "--primary-foreground",
-        isDark ? "0 0% 100%" : "0 0% 0%",
-        "important",
-      );
-      root.style.setProperty(
-        "--secondary-foreground",
-        isDark ? "0 0% 100%" : "0 0% 0%",
-        "important",
-      );
-      root.style.setProperty(
-        "--accent-foreground",
-        isDark ? "0 0% 100%" : "0 0% 0%",
-        "important",
-      );
-      root.style.setProperty(
-        "--muted-foreground",
-        isDark ? "0 0% 70%" : "0 0% 40%",
-        "important",
-      );
-      root.style.setProperty(
-        "--card-foreground",
-        isDark ? "0 0% 100%" : "0 0% 0%",
-        "important",
-      );
-    }
+  const value = {
+    theme,
+    setTheme: (theme: Theme) => {
+      localStorage?.setItem(storageKey, theme);
+      setTheme(theme);
+    },
+    applyTheme,
   };
 
-  const hexToHsl = (hex: string) => {
-    const r = parseInt(hex.slice(1, 3), 16) / 255;
-    const g = parseInt(hex.slice(3, 5), 16) / 255;
-    const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return (
+    <ThemeProviderContext.Provider {...props} value={value}>
+      {children}
+    </ThemeProviderContext.Provider>
+  );
+}
 
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h = 0,
-      s = 0,
-      l = (max + min) / 2;
+export const useTheme = () => {
+  const context = useContext(ThemeProviderContext);
 
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0);
-          break;
-        case g:
-          h = (b - r) / d + 2;
-          break;
-        case b:
-          h = (r - g) / d + 4;
-          break;
-      }
-      h /= 6;
-    }
+  if (context === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider");
 
-    return {
-      h: Math.round(h * 360),
-      s: Math.round(s * 100),
-      l: Math.round(l * 100),
-    };
-  };
-
-  return { theme, applyTheme, setTheme };
+  return context;
 };
+
+// Theme toggle component
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+
+  const applyTheme = React.useCallback((newTheme: Theme) => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (newTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(newTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme, applyTheme]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = () => {
+      if (theme === "system") {
+        applyTheme("system");
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [theme, applyTheme]);
+
+  const toggleTheme = () => {
+    const themes: Theme[] = ["light", "dark", "system"];
+    const currentIndex = themes.indexOf(theme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]!);
+  };
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+    >
+      {theme === "light" && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+          />
+        </svg>
+      )}
+      {theme === "dark" && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+          />
+        </svg>
+      )}
+      {theme === "system" && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0020.75 3H3.75A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"
+          />
+        </svg>
+      )}
+      <span className="sr-only">Toggle theme</span>
+    </button>
+  );
+}

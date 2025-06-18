@@ -34,7 +34,7 @@ const HistorySyncTab = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      setChatHistory(data || []);
+      setChatHistory(data ?? []);
     } catch (error: any) {
       console.error("Error fetching chat history:", error);
       toast({
@@ -67,7 +67,7 @@ const HistorySyncTab = () => {
         title,
         contextId,
         exportDate: new Date().toISOString(),
-        messages: messages || [],
+        messages: messages ?? [],
       };
 
       // Create and download file
@@ -107,7 +107,7 @@ const HistorySyncTab = () => {
           contextId: chat.id,
           createdAt: chat.created_at,
           updatedAt: chat.updated_at,
-          messageCount: chat.messages?.length || 0,
+          messageCount: chat.messages?.length ?? 0,
         })),
       };
 
@@ -212,7 +212,7 @@ const HistorySyncTab = () => {
                     <div className="font-medium">{chat.title}</div>
                     <div className="text-sm text-muted-foreground">
                       {formatDate(chat.updated_at)} •{" "}
-                      {chat.messages?.length || 0} messages
+                      {chat.messages?.length ?? 0} messages
                     </div>
                   </div>
                   <Button

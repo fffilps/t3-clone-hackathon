@@ -1,3 +1,4 @@
+import type { Theme } from "@/hooks/useTheme";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -192,13 +193,13 @@ const CustomizationTab = () => {
 
       if (data) {
         setProfile({
-          preferred_name: data.preferred_name || "",
-          occupation: data.occupation || "",
-          chat_traits: data.chat_traits || [],
-          selected_theme: data.selected_theme || "modern",
-          custom_primary_color: data.custom_primary_color || "#0f172a",
+          preferred_name: data.preferred_name ?? "",
+          occupation: data.occupation ?? "",
+          chat_traits: data.chat_traits ?? [],
+          selected_theme: data.selected_theme ?? "modern",
+          custom_primary_color: data.custom_primary_color ?? "#0f172a",
         });
-        setCustomColor(data.custom_primary_color || "#0f172a");
+        setCustomColor(data.custom_primary_color ?? "#0f172a");
       }
     } catch (error: any) {
       console.error("Error fetching profile:", error);
@@ -213,8 +214,8 @@ const CustomizationTab = () => {
       const { error } = await supabase.from("user_profiles").upsert(
         {
           user_id: user.id,
-          preferred_name: profile.preferred_name || null,
-          occupation: profile.occupation || null,
+          preferred_name: profile.preferred_name ?? null,
+          occupation: profile.occupation ?? null,
           chat_traits:
             profile.chat_traits.length > 0 ? profile.chat_traits : null,
           selected_theme: profile.selected_theme,
@@ -228,8 +229,8 @@ const CustomizationTab = () => {
       if (error) throw error;
 
       // Update the theme in the useTheme hook
-      setTheme(profile.selected_theme);
-      applyTheme(profile.selected_theme);
+      setTheme(profile.selected_theme as Theme);
+      applyTheme(profile.selected_theme as Theme);
 
       toast({
         title: "Customization Saved",
@@ -249,7 +250,7 @@ const CustomizationTab = () => {
   const handleThemeSelect = (themeId: string) => {
     setProfile((prev) => ({ ...prev, selected_theme: themeId }));
     // Apply theme immediately for preview
-    applyTheme(themeId);
+    applyTheme(themeId as Theme);
   };
 
   const handleCustomColorChange = (color: string) => {

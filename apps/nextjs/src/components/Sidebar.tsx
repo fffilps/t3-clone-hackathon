@@ -67,7 +67,7 @@ const Sidebar = ({
         return;
       }
 
-      setContexts(data || []);
+      setContexts(data ?? []);
     } catch (error) {
       console.error("Error fetching contexts:", error);
     }
@@ -83,6 +83,7 @@ const Sidebar = ({
           {
             title: "New Chat",
             user_id: user.id,
+            selected_model: "openai/chatgpt-4o-latest",
           },
         ])
         .select()

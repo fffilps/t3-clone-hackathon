@@ -11,64 +11,72 @@ export interface Database {
     Tables: {
       contexts: {
         Row: {
-          created_at: string;
           id: string;
-          selected_model: string | null;
           title: string;
-          updated_at: string;
           user_id: string;
+          selected_model: string;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
-          created_at?: string;
           id?: string;
-          selected_model?: string | null;
-          title?: string;
-          updated_at?: string;
+          title: string;
           user_id: string;
+          selected_model: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          created_at?: string;
           id?: string;
-          selected_model?: string | null;
           title?: string;
-          updated_at?: string;
           user_id?: string;
+          selected_model?: string;
+          created_at?: string;
+          updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "contexts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       messages: {
         Row: {
-          content: string;
-          context_id: string;
-          created_at: string;
           id: string;
-          parent_message_id: string | null;
-          role: Database["public"]["Enums"]["message_role"];
-          thumbs_down: number | null;
-          thumbs_up: number | null;
+          content: string;
+          role: "user" | "assistant" | "system";
+          created_at: string;
+          context_id: string;
           user_id: string | null;
+          parent_message_id: string | null;
+          thumbs_up: number | null;
+          thumbs_down: number | null;
         };
         Insert: {
-          content: string;
-          context_id: string;
-          created_at?: string;
           id?: string;
-          parent_message_id?: string | null;
-          role: Database["public"]["Enums"]["message_role"];
-          thumbs_down?: number | null;
-          thumbs_up?: number | null;
+          content: string;
+          role: "user" | "assistant" | "system";
+          created_at?: string;
+          context_id: string;
           user_id?: string | null;
+          parent_message_id?: string | null;
+          thumbs_up?: number | null;
+          thumbs_down?: number | null;
         };
         Update: {
-          content?: string;
-          context_id?: string;
-          created_at?: string;
           id?: string;
-          parent_message_id?: string | null;
-          role?: Database["public"]["Enums"]["message_role"];
-          thumbs_down?: number | null;
-          thumbs_up?: number | null;
+          content?: string;
+          role?: "user" | "assistant" | "system";
+          created_at?: string;
+          context_id?: string;
           user_id?: string | null;
+          parent_message_id?: string | null;
+          thumbs_up?: number | null;
+          thumbs_down?: number | null;
         };
         Relationships: [
           {
@@ -79,123 +87,177 @@ export interface Database {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "messages_parent_message_id_fkey";
-            columns: ["parent_message_id"];
+            foreignKeyName: "messages_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
-            referencedRelation: "messages";
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          preferred_name: string | null;
+          occupation: string | null;
+          chat_traits: string[] | null;
+          selected_theme: string | null;
+          custom_primary_color: string | null;
+          openai_api_key: string | null;
+          google_gemini_api_key: string | null;
+          anthropic_api_key: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          preferred_name?: string | null;
+          occupation?: string | null;
+          chat_traits?: string[] | null;
+          selected_theme?: string | null;
+          custom_primary_color?: string | null;
+          openai_api_key?: string | null;
+          google_gemini_api_key?: string | null;
+          anthropic_api_key?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          preferred_name?: string | null;
+          occupation?: string | null;
+          chat_traits?: string[] | null;
+          selected_theme?: string | null;
+          custom_primary_color?: string | null;
+          openai_api_key?: string | null;
+          google_gemini_api_key?: string | null;
+          anthropic_api_key?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];
       };
       user_api_keys: {
         Row: {
+          id: string;
+          user_id: string;
+          provider: string;
           api_key_encrypted: string;
           created_at: string;
-          id: string;
-          provider: string;
           updated_at: string;
-          user_id: string;
         };
         Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
           api_key_encrypted: string;
           created_at?: string;
-          id?: string;
-          provider?: string;
           updated_at?: string;
-          user_id: string;
         };
         Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
           api_key_encrypted?: string;
           created_at?: string;
-          id?: string;
-          provider?: string;
           updated_at?: string;
-          user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "user_api_keys_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       user_model_preferences: {
         Row: {
-          created_at: string;
+          id: string;
+          user_id: string;
+          model_id: string;
           enabled: boolean;
-          id: string;
-          model_id: string;
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          enabled?: boolean;
-          id?: string;
-          model_id: string;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          enabled?: boolean;
-          id?: string;
-          model_id?: string;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-      user_profiles: {
-        Row: {
-          anthropic_api_key: string | null;
-          chat_traits: string[] | null;
           created_at: string;
-          custom_primary_color: string | null;
-          google_gemini_api_key: string | null;
-          id: string;
-          occupation: string | null;
-          openai_api_key: string | null;
-          openrouter_api_key: string | null;
-          preferred_name: string | null;
-          selected_theme: string | null;
           updated_at: string;
-          user_id: string;
         };
         Insert: {
-          anthropic_api_key?: string | null;
-          chat_traits?: string[] | null;
-          created_at?: string;
-          custom_primary_color?: string | null;
-          google_gemini_api_key?: string | null;
           id?: string;
-          occupation?: string | null;
-          openai_api_key?: string | null;
-          openrouter_api_key?: string | null;
-          preferred_name?: string | null;
-          selected_theme?: string | null;
-          updated_at?: string;
           user_id: string;
+          model_id: string;
+          enabled: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          anthropic_api_key?: string | null;
-          chat_traits?: string[] | null;
-          created_at?: string;
-          custom_primary_color?: string | null;
-          google_gemini_api_key?: string | null;
           id?: string;
-          occupation?: string | null;
-          openai_api_key?: string | null;
-          openrouter_api_key?: string | null;
-          preferred_name?: string | null;
-          selected_theme?: string | null;
-          updated_at?: string;
           user_id?: string;
+          model_id?: string;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "user_model_preferences_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      api_keys: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: string;
+          api_key_encrypted: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
+          api_key_encrypted: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
+          api_key_encrypted?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
-    Views: Record<never, never>;
-    Functions: Record<never, never>;
-    Enums: {
-      message_role: "user" | "assistant" | "system";
-    };
-    CompositeTypes: Record<never, never>;
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

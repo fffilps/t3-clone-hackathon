@@ -21,8 +21,9 @@ const Chat = () => {
       const { data, error } = await supabase
         .from("contexts")
         .insert({
-          user_id: user!.id,
           title: "New Chat",
+          user_id: user!.id,
+          selected_model: "openai/chatgpt-4o-latest",
         })
         .select()
         .single();

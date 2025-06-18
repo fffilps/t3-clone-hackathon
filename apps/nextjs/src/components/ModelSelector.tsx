@@ -70,7 +70,7 @@ const ModelSelector = ({
 }: ModelSelectorProps) => {
   const { user } = useAuth();
   const [currentModel, setCurrentModel] = useState(
-    selectedModel || "openai/chatgpt-4o-latest",
+    selectedModel ?? "openai/chatgpt-4o-latest",
   );
   const [enabledModels, setEnabledModels] = useState<string[]>([]);
 

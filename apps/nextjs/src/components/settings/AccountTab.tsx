@@ -19,7 +19,7 @@ const AccountTab = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState({
     preferred_name: "",
-    email: user?.email || "",
+    email: user?.email ?? "",
   });
   const [loading, setLoading] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -49,7 +49,7 @@ const AccountTab = () => {
       if (data) {
         setProfile((prev) => ({
           ...prev,
-          preferred_name: data.preferred_name || "",
+          preferred_name: data.preferred_name ?? "",
         }));
       }
     } catch (error: any) {
@@ -64,7 +64,7 @@ const AccountTab = () => {
     try {
       const { error } = await supabase.from("user_profiles").upsert({
         user_id: user.id,
-        preferred_name: profile.preferred_name || null,
+        preferred_name: profile.preferred_name ?? null,
       });
 
       if (error) throw error;

@@ -60,10 +60,10 @@ const ApiKeysTab = () => {
 
       if (data) {
         setApiKeys({
-          openai_api_key: data.openai_api_key || "",
-          google_gemini_api_key: data.google_gemini_api_key || "",
-          anthropic_api_key: data.anthropic_api_key || "",
-          openrouter_api_key: openRouterData?.api_key_encrypted || "",
+          openai_api_key: data.openai_api_key ?? "",
+          google_gemini_api_key: data.google_gemini_api_key ?? "",
+          anthropic_api_key: data.anthropic_api_key ?? "",
+          openrouter_api_key: openRouterData?.api_key_encrypted ?? "",
         });
       }
     } catch (error: any) {
