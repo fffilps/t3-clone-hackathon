@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { type ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { cn } from "@acme/ui";
 import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
+import ApiKeySplashModal from "~/components/ApiKeySplashModal";
+import { Toaster as Sonner } from "~/components/ui/sonner";
+import { TooltipProvider } from "~/components/ui/tooltip";
+import { AuthProvider } from "~/hooks/useAuth";
 import { TRPCReactProvider } from "~/trpc/react";
 
 import "~/app/globals.css";
@@ -17,8 +22,8 @@ export const metadata: Metadata = {
       ? "https://turbo.t3.gg"
       : "http://localhost:3000",
   ),
-  title: "Create T3 Turbo",
-  description: "Simple monorepo with shared backend for web & mobile apps",
+  title: "AI Chat App",
+  description: "A modern AI chat application with multiple providers",
   openGraph: {
     title: "Create T3 Turbo",
     description: "Simple monorepo with shared backend for web & mobile apps",
@@ -30,6 +35,7 @@ export const metadata: Metadata = {
     site: "@jullerino",
     creator: "@jullerino",
   },
+  icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
 export const viewport: Viewport = {
@@ -48,7 +54,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-export default function RootLayout(props: { children: React.ReactNode }) {
+export default function RootLayout(props: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -59,11 +65,21 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <div className="min-h-screen bg-background text-foreground">
+                  <Toaster />
+                  <Sonner />
+                  <ApiKeySplashModal />
+                  {props.children}
+                </div>
+              </TooltipProvider>
+            </AuthProvider>
+          </TRPCReactProvider>
           <div className="absolute bottom-4 right-4">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
           </div>
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>
