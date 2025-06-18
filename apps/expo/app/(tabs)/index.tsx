@@ -34,21 +34,23 @@ export default function ChatScreen() {
 
   const [inputText, setInputText] = useState("");
   const [showContexts, setShowContexts] = useState(false);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    if (currentContext?.messages?.length) {
+    if (currentContext?.messages?.length && !isUserScrolling) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [currentContext?.messages]);
+  }, [currentContext?.messages, isUserScrolling]);
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const message = inputText.trim();
     setInputText("");
+    setIsUserScrolling(false);
 
     if (!currentContext) {
       // Create new context
@@ -213,22 +215,11 @@ export default function ChatScreen() {
               style={styles.messagesList}
               contentContainerStyle={{ paddingVertical: 12 }}
               showsVerticalScrollIndicator={true}
-              onContentSizeChange={() => {
-                if (
-                  currentContext?.messages &&
-                  currentContext.messages.length > 0
-                ) {
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                }
+              onScrollBeginDrag={() => setIsUserScrolling(true)}
+              onScrollEndDrag={() => {
+                setTimeout(() => setIsUserScrolling(false), 100);
               }}
-              onLayout={() => {
-                if (
-                  currentContext?.messages &&
-                  currentContext.messages.length > 0
-                ) {
-                  flatListRef.current?.scrollToEnd({ animated: false });
-                }
-              }}
+              onMomentumScrollEnd={() => setIsUserScrolling(false)}
               scrollEventThrottle={16}
               removeClippedSubviews={true}
               maxToRenderPerBatch={10}

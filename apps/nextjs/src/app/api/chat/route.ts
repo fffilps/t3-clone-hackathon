@@ -1,4 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+import { env } from "~/env";
 
 interface ApiKeyConfig {
   openai?: string;
@@ -198,7 +201,7 @@ export async function POST(req: NextRequest) {
           response = await callOpenRouter(
             messages,
             model,
-            process.env.OPENROUTER_API_KEY || "",
+            env.OPENROUTER_API_KEY || "",
           );
           break;
         default:

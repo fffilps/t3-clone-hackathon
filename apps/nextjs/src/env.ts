@@ -10,6 +10,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    STRIPE_SECRET_KEY: z.string().min(1),
+    OPENROUTER_API_KEY: z.string().optional(),
   },
   /**
    * Specify your server-side environment variables schema here.
@@ -17,6 +19,7 @@ export const env = createEnv({
    */
   server: {
     POSTGRES_URL: z.string().url(),
+    STRIPE_SECRET_KEY: z.string().min(1),
   },
 
   /**
@@ -31,6 +34,8 @@ export const env = createEnv({
    */
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
 
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },

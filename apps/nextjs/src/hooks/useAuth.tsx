@@ -1,7 +1,7 @@
 "use client";
 
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "../integrations/supabase/client";
 

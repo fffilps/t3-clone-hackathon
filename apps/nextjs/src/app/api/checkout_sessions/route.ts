@@ -21,10 +21,15 @@ export async function POST() {
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?canceled=true`,
     });
+
+    if (!session.url) {
+      throw new Error("Failed to create checkout session");
+    }
+
     return NextResponse.redirect(session.url, 303);
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json(
-      { error: err.message },
+      { error: err.message || "An error occurred" },
       { status: err.statusCode || 500 },
     );
   }

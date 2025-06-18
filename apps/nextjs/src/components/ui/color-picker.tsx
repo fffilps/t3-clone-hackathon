@@ -1,7 +1,6 @@
-
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ColorPickerProps {
   color: string;
@@ -9,7 +8,11 @@ interface ColorPickerProps {
   label?: string;
 }
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({
+  color,
+  onChange,
+  label,
+}) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,7 +24,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
       {label && <Label>{label}</Label>}
       <div className="flex items-center gap-2">
         <div
-          className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer"
+          className="h-8 w-8 cursor-pointer rounded border-2 border-gray-300"
           style={{ backgroundColor: color }}
           onClick={() => setDisplayColorPicker(!displayColorPicker)}
         />
@@ -29,7 +32,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
           type="color"
           value={color}
           onChange={handleColorChange}
-          className="w-16 h-8 p-0 border-0 cursor-pointer"
+          className="h-8 w-16 cursor-pointer border-0 p-0"
         />
         <Input
           type="text"

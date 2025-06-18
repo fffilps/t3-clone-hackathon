@@ -175,7 +175,7 @@ const Settings = () => {
 
           <Suspense>
             <TabsContent value="account">
-              <AccountTab searchParams={{ canceled: "" }} />
+              <AccountTab />
             </TabsContent>
           </Suspense>
 

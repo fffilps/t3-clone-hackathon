@@ -17,9 +17,11 @@ interface Message {
   content: string;
   role: "user" | "assistant" | "system";
   created_at: string;
-  user_id?: string;
-  thumbs_up?: number;
-  thumbs_down?: number;
+  context_id: string;
+  user_id: string | null;
+  parent_message_id: string | null;
+  thumbs_up: number | null;
+  thumbs_down: number | null;
 }
 
 interface ChatInterfaceProps {
