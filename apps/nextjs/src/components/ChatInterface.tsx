@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Send } from "lucide-react";
 
 import { useToast } from "../hooks/use-toast";
@@ -29,7 +30,8 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState(
@@ -37,109 +39,180 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
   );
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
-  const { user } = useAuth();
-  const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (contextId) {
-      void fetchMessages();
-      void fetchSelectedModel();
-    }
-  }, [contextId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const fetchSelectedModel = async () => {
-    try {
+  // Fetch context details (for selected model)
+  const { data: context } = useQuery({
+    queryKey: ["context", contextId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("contexts")
-        .select("selected_model")
+        .select("*")
         .eq("id", contextId)
         .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contextId && !!user,
+  });
 
-      if (error) {
-        console.error("Error fetching selected model:", error);
-        return;
-      }
-
-      if (data?.selected_model) {
-        setSelectedModel(data.selected_model);
-      }
-    } catch (error) {
-      console.error("Error fetching selected model:", error);
+  useEffect(() => {
+    if (context?.selected_model) {
+      setSelectedModel(context.selected_model);
     }
-  };
+  }, [context]);
 
-  const fetchMessages = async () => {
-    try {
+  // Fetch messages
+  const { data: messages = [] } = useQuery({
+    queryKey: ["messages", contextId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("messages")
         .select("*")
         .eq("context_id", contextId)
         .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contextId && !!user,
+  });
+
+  // Add user/assistant message mutation
+  const addMessageMutation = useMutation({
+    mutationFn: async ({
+      role,
+      content,
+    }: {
+      role: "user" | "assistant";
+      content: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("messages")
+        .insert({
+          context_id: contextId,
+          role,
+          content,
+          user_id: user!.id,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", contextId] });
+    },
+  });
+
+  // Edit message mutation
+  const updateMessageMutation = useMutation({
+    mutationFn: async ({
+      messageId,
+      content,
+    }: {
+      messageId: string;
+      content: string;
+    }) => {
+      const { error } = await supabase
+        .from("messages")
+        .update({ content })
+        .eq("id", messageId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", contextId] });
+      setEditingMessageId(null);
+      setEditingContent("");
+      toast({
+        title: "Message updated",
+        description: "Your message has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating message",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Scroll to bottom on messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage = inputValue.trim();
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      // Add user message
+      await addMessageMutation.mutateAsync({
+        role: "user",
+        content: userMessage,
+      });
+
+      // Prepare messages for AI
+      const allMessages = [...messages, { role: "user", content: userMessage }];
+      const chatMessages = allMessages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke("chat-with-ai", {
+        body: {
+          messages: chatMessages,
+          model: selectedModel,
+          contextId: contextId,
+        },
+      });
 
       if (error) {
-        console.error("Error fetching messages:", error);
-        return;
+        throw new Error(error.message || "Failed to get AI response");
       }
 
-      setMessages(data ?? []);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
+      // Optionally show which provider was used
+      if (data?.provider && data.provider !== "openrouter") {
+        toast({
+          title: "Using Direct API",
+          description: `Response generated using your ${data.provider.charAt(0).toUpperCase() + data.provider.slice(1)} API key`,
+        });
+      }
+
+      // The assistant message is already saved by the edge function
+      queryClient.invalidateQueries({ queryKey: ["messages", contextId] });
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      toast({
+        title: "Error sending message",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const handleEdit = (messageId: string) => {
-    const messageToEdit = messages.find((m) => m.id === messageId);
+    const messageToEdit = messages.find((m: any) => m.id === messageId);
     if (messageToEdit) {
       setEditingMessageId(messageId);
       setEditingContent(messageToEdit.content);
     }
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingMessageId || !editingContent.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from("messages")
-        .update({ content: editingContent.trim() })
-        .eq("id", editingMessageId);
-
-      if (error) throw error;
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === editingMessageId
-            ? { ...msg, content: editingContent.trim() }
-            : msg,
-        ),
-      );
-
-      setEditingMessageId(null);
-      setEditingContent("");
-
-      toast({
-        title: "Message updated",
-        description: "Your message has been updated successfully.",
-      });
-    } catch (error) {
-      const message =
-        typeof error === "object" && error && "message" in error
-          ? (error as { message: string }).message
-          : String(error);
-      console.error("Error updating message:", error);
-      toast({
-        title: "Error updating message",
-        description: message,
-        variant: "destructive",
+  const handleSaveEdit = () => {
+    if (editingMessageId && editingContent.trim()) {
+      updateMessageMutation.mutate({
+        messageId: editingMessageId,
+        content: editingContent.trim(),
       });
     }
   };
@@ -147,129 +220,6 @@ const ChatInterface = ({ contextId }: ChatInterfaceProps) => {
   const handleCancelEdit = () => {
     setEditingMessageId(null);
     setEditingContent("");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage = inputValue.trim();
-    setInputValue("");
-    setIsLoading(true);
-
-    // Add user message to the chat
-    const userMessageData = {
-      content: userMessage,
-      role: "user" as const,
-      context_id: contextId,
-      user_id: user?.id,
-    };
-
-    try {
-      // Insert user message
-      const { data: userMsg, error: userError } = await supabase
-        .from("messages")
-        .insert([userMessageData])
-        .select()
-        .single();
-
-      if (userError) {
-        console.error("Error inserting user message:", userError);
-        toast({
-          title: "Error",
-          description: "Failed to send message",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      setMessages((prev) => [...prev, userMsg]);
-
-      // Get API keys for the user
-      const { data: apiKeys, error: apiError } = await supabase
-        .from("user_api_keys")
-        .select("provider, api_key_encrypted")
-        .eq("user_id", user?.id ?? "");
-
-      if (apiError) {
-        console.error("Error fetching API keys:", apiError);
-      }
-
-      // Call the chat API
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMsg].map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-          model: selectedModel,
-          apiKeys: Array.isArray(apiKeys)
-            ? apiKeys.reduce(
-                (acc, key) => {
-                  if (
-                    key &&
-                    typeof key === "object" &&
-                    "provider" in key &&
-                    "api_key_encrypted" in key
-                  ) {
-                    acc[key.provider as string] =
-                      key.api_key_encrypted as string;
-                  }
-                  return acc;
-                },
-                {} as Record<string, string>,
-              )
-            : undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI");
-      }
-
-      const data = await response.json();
-      const assistantMessage = data.content;
-
-      // Insert assistant message
-      const { data: assistantMsg, error: assistantError } = await supabase
-        .from("messages")
-        .insert([
-          {
-            content: assistantMessage,
-            role: "assistant",
-            context_id: contextId,
-            user_id: user?.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (assistantError) {
-        console.error("Error inserting assistant message:", assistantError);
-        toast({
-          title: "Error",
-          description: "Failed to save AI response",
-          variant: "destructive",
-        });
-      } else {
-        setMessages((prev) => [...prev, assistantMsg]);
-      }
-    } catch (error) {
-      console.error("Error in chat:", error);
-      toast({
-        title: "Error",
-        description: "Failed to get response from AI",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (

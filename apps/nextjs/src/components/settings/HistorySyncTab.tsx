@@ -14,16 +14,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, DownloadCloud } from "lucide-react";
 
-// TODO: Use a proper Context type for chatHistory when available in the Next.js app.
-// import type { Context } from '../../../../apps/expo/types/database';
-// import type { Context } from '../../../expo/types/database';
-const [chatHistory, setChatHistory] = useState<
-  (Tables<"contexts"> & { messages?: Tables<"messages">[] })[]
->([]);
-
 const HistorySyncTab = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+
+  const [chatHistory, setChatHistory] = useState<
+    (Tables<"contexts"> & { messages?: Tables<"messages">[] })[]
+  >([]);
 
   const fetchChatHistory = async () => {
     if (!user) return;
