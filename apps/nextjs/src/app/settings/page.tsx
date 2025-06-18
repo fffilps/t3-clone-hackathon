@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AccountTab from "@/components/settings/AccountTab";
 import ApiKeysTab from "@/components/settings/ApiKeysTab";
 import CustomizationTab from "@/components/settings/CustomizationTab";
@@ -29,7 +29,6 @@ const Settings = () => {
   const { user, loading, signOut } = useAuth();
   const { theme } = useTheme();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [currentTheme, setCurrentTheme] = useState<"light" | "dark" | "system">(
     "system",
   );
@@ -41,18 +40,7 @@ const Settings = () => {
       (localStorage.getItem("theme") as "light" | "dark" | "system") ||
       "system";
     setCurrentTheme(savedTheme);
-
-    // Get tab from URL parameter
-    const tabParam = searchParams.get("tab");
-    if (
-      tabParam &&
-      ["account", "customization", "history", "models", "api-keys"].includes(
-        tabParam,
-      )
-    ) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
+  }, []);
 
   const handleThemeChange = (theme: "light" | "dark" | "system") => {
     setCurrentTheme(theme);
@@ -185,9 +173,11 @@ const Settings = () => {
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="account">
-            <AccountTab />
-          </TabsContent>
+          <Suspense>
+            <TabsContent value="account">
+              <AccountTab searchParams={{ canceled: "" }} />
+            </TabsContent>
+          </Suspense>
 
           <TabsContent value="customization">
             <CustomizationTab />

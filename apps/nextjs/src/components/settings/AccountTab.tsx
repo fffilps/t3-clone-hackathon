@@ -14,11 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { KeyIcon, MailIcon, UserIcon } from "lucide-react";
 
-const AccountTab = ({
-  searchParams,
-}: {
-  searchParams: { canceled: string };
-}) => {
+const AccountTab = () => {
   const [isPro, setIsPro] = useState(false);
   const { user } = useAuth();
   const [profile, setProfile] = useState({
