@@ -344,8 +344,29 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
 
+    // Create an optimistic user message
+    const optimisticUserMessage: Message = {
+      id: `temp-${Date.now()}-user`,
+      context_id: currentContext.id,
+      content,
+      role: "user",
+      created_at: new Date().toISOString(),
+    };
+
+    // Optimistically update the UI
+    if (mountedRef.current) {
+      setCurrentContext((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [...(prev.messages || []), optimisticUserMessage],
+            }
+          : prev,
+      );
+    }
+
     try {
-      // First, save the user message to the database
+      // Save the user message to the database
       const { data: userMessage, error: userMessageError } = await supabase
         .from("messages")
         .insert({
@@ -362,13 +383,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw userMessageError;
       }
 
-      // Update the current context with the new user message
+      // Replace the optimistic message with the real one
       if (mountedRef.current) {
         setCurrentContext((prev) =>
           prev
             ? {
                 ...prev,
-                messages: [...(prev.messages || []), userMessage],
+                messages: [
+                  ...(prev.messages || []).filter(
+                    (msg) => !msg.id.startsWith("temp-"),
+                  ),
+                  userMessage,
+                ],
               }
             : prev,
         );
@@ -408,11 +434,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw messagesError;
       }
 
-      // Update current context with fresh messages from DB
+      // Always reload the current context from the DB to ensure up-to-date state
+      const { data: contextData, error: contextError } = await supabase
+        .from("contexts")
+        .select("*")
+        .eq("id", currentContext.id)
+        .single();
+
+      if (contextError) {
+        console.error("Error loading context after send:", contextError);
+        throw contextError;
+      }
+
+      // Filter out any user messages with empty or null content
+      const filteredMessages = (messages || []).filter(
+        (msg) =>
+          msg.role !== "user" || (msg.content !== null && msg.content !== ""),
+      );
+
+      // Update current context with fresh data from DB
       if (mountedRef.current) {
-        setCurrentContext((prev) =>
-          prev ? { ...prev, messages: messages || [] } : prev,
-        );
+        setCurrentContext({ ...contextData, messages: filteredMessages });
       }
 
       // Update context timestamp (handled by trigger)
@@ -422,6 +464,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         .eq("id", currentContext.id);
     } catch (error) {
       console.error("Error sending message:", error);
+      // Remove optimistic message on error
+      if (mountedRef.current) {
+        setCurrentContext((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: (prev.messages || []).filter(
+                  (msg) => !msg.id.startsWith("temp-"),
+                ),
+              }
+            : prev,
+        );
+      }
       throw error;
     } finally {
       if (mountedRef.current) {
