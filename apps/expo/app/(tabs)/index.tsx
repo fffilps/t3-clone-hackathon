@@ -34,23 +34,14 @@ export default function ChatScreen() {
 
   const [inputText, setInputText] = useState("");
   const [showContexts, setShowContexts] = useState(false);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-
-  useEffect(() => {
-    if (currentContext?.messages?.length && !isUserScrolling) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [currentContext?.messages, isUserScrolling]);
+  const [hasAutoScrolled, setHasAutoScrolled] = useState(false);
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const message = inputText.trim();
     setInputText("");
-    setIsUserScrolling(false);
 
     if (!currentContext) {
       // Create new context
@@ -66,6 +57,7 @@ export default function ChatScreen() {
 
   const handleNewContext = () => {
     setShowContexts(false);
+    setHasAutoScrolled(false);
   };
 
   const handleDeleteContext = (contextId: string) => {
@@ -83,39 +75,56 @@ export default function ChatScreen() {
     );
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View
-      style={[
-        styles.messageRow,
-        item.role === "user" ? styles.userRow : styles.assistantRow,
-      ]}
-    >
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isPending =
+      item.content === "Thinking..." || item.id.startsWith("temp-");
+
+    return (
       <View
         style={[
-          styles.messageBubble,
-          item.role === "user" ? styles.userBubble : styles.assistantBubble,
+          styles.messageRow,
+          item.role === "user" ? styles.userRow : styles.assistantRow,
         ]}
       >
-        {item.role === "assistant" ? (
-          <View style={styles.assistantContentRow}>
-            <View style={styles.botIcon}>
-              <Bot size={16} color="#8B5CF6" />
+        <View
+          style={[
+            styles.messageBubble,
+            item.role === "user" ? styles.userBubble : styles.assistantBubble,
+            isPending && styles.pendingBubble,
+          ]}
+        >
+          {item.role === "assistant" ? (
+            <View style={styles.assistantContentRow}>
+              <View style={styles.botIcon}>
+                <Bot size={16} color="#8B5CF6" />
+              </View>
+              <Text
+                style={[
+                  styles.messageText,
+                  styles.assistantText,
+                  isPending && styles.pendingText,
+                ]}
+                numberOfLines={0}
+              >
+                {item.content}
+              </Text>
+              {isPending && (
+                <ActivityIndicator
+                  size="small"
+                  color="#8B5CF6"
+                  style={styles.pendingSpinner}
+                />
+              )}
             </View>
-            <Text
-              style={[styles.messageText, styles.assistantText]}
-              numberOfLines={0}
-            >
+          ) : (
+            <Text style={[styles.messageText, styles.userText]}>
               {item.content}
             </Text>
-          </View>
-        ) : (
-          <Text style={[styles.messageText, styles.userText]}>
-            {item.content}
-          </Text>
-        )}
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderContextItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -123,6 +132,7 @@ export default function ChatScreen() {
       onPress={() => {
         selectContext(item.id);
         setShowContexts(false);
+        setHasAutoScrolled(false);
       }}
     >
       <View style={styles.contextInfo}>
@@ -141,6 +151,16 @@ export default function ChatScreen() {
       </TouchableOpacity>
     </TouchableOpacity>
   );
+
+  // Auto-scroll to bottom only when first opening (first load of messages)
+  useEffect(() => {
+    if (currentContext?.messages?.length && !hasAutoScrolled) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+        setHasAutoScrolled(true);
+      }, 100);
+    }
+  }, [currentContext?.messages, hasAutoScrolled]);
 
   if (showContexts) {
     return (
@@ -215,11 +235,6 @@ export default function ChatScreen() {
               style={styles.messagesList}
               contentContainerStyle={{ paddingVertical: 12 }}
               showsVerticalScrollIndicator={true}
-              onScrollBeginDrag={() => setIsUserScrolling(true)}
-              onScrollEndDrag={() => {
-                setTimeout(() => setIsUserScrolling(false), 100);
-              }}
-              onMomentumScrollEnd={() => setIsUserScrolling(false)}
               scrollEventThrottle={16}
               removeClippedSubviews={true}
               maxToRenderPerBatch={10}
@@ -476,6 +491,15 @@ const styles = StyleSheet.create({
     color: "#8B5CF6",
     fontSize: 14,
     fontFamily: "Inter-Regular",
+    marginLeft: 8,
+  },
+  pendingBubble: {
+    opacity: 0.6,
+  },
+  pendingText: {
+    opacity: 0.7,
+  },
+  pendingSpinner: {
     marginLeft: 8,
   },
 });

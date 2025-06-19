@@ -345,36 +345,49 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
 
     try {
-      // Add user message to database
-      const { data: userMessage, error: userError } = await supabase
+      // First, save the user message to the database
+      const { data: userMessage, error: userMessageError } = await supabase
         .from("messages")
         .insert({
           context_id: currentContext.id,
-          content,
           role: "user",
+          content,
+          user_id: user.id,
         })
         .select()
         .single();
 
-      if (userError) throw userError;
-
-      // Update current context with user message
-      if (mountedRef.current) {
-        setCurrentContext((prev) => ({
-          ...prev!,
-          messages: [...(prev!.messages || []), userMessage],
-        }));
+      if (userMessageError) {
+        console.error("Error saving user message:", userMessageError);
+        throw userMessageError;
       }
 
-      // Send to AI API using Supabase Edge Function
-      const { data: aiResponse, error: aiApiError } =
+      // Update the current context with the new user message
+      if (mountedRef.current) {
+        setCurrentContext((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: [...(prev.messages || []), userMessage],
+              }
+            : prev,
+        );
+      }
+
+      // Prepare the complete message history for the AI
+      const allMessages = [...(currentContext.messages || []), userMessage];
+      const messagesForAI = allMessages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      // Call Edge Function to get AI response
+      const { data: result, error: aiApiError } =
         await supabase.functions.invoke("chat-with-ai", {
           body: {
-            message: content,
-            contextId: currentContext.id,
+            messages: messagesForAI,
             model: currentContext.selected_model || selectedModel.id,
-            messages: currentContext.messages || [],
-            userProfile: { ...userProfile, user_id: user.id },
+            contextId: currentContext.id,
           },
         });
 
@@ -383,27 +396,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw new Error(aiApiError.message || "Failed to get AI response");
       }
 
-      const aiContent = aiResponse.content;
-
-      // Add AI response to database
-      const { data: aiMessage, error: aiError } = await supabase
+      // Reload all messages to get the assistant's response
+      const { data: messages, error: messagesError } = await supabase
         .from("messages")
-        .insert({
-          context_id: currentContext.id,
-          content: aiContent,
-          role: "assistant",
-        })
-        .select()
-        .single();
+        .select("*")
+        .eq("context_id", currentContext.id)
+        .order("created_at", { ascending: true });
 
-      if (aiError) throw aiError;
+      if (messagesError) {
+        console.error("Error loading messages after send:", messagesError);
+        throw messagesError;
+      }
 
-      // Update current context with AI message
+      // Update current context with fresh messages from DB
       if (mountedRef.current) {
-        setCurrentContext((prev) => ({
-          ...prev!,
-          messages: [...(prev!.messages || []), userMessage, aiMessage],
-        }));
+        setCurrentContext((prev) =>
+          prev ? { ...prev, messages: messages || [] } : prev,
+        );
       }
 
       // Update context timestamp (handled by trigger)
@@ -413,7 +422,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         .eq("id", currentContext.id);
     } catch (error) {
       console.error("Error sending message:", error);
-      // You might want to show this error to the user
       throw error;
     } finally {
       if (mountedRef.current) {
