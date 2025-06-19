@@ -1,5 +1,6 @@
 # Wannabe t3
-<img width="500" alt="wannabe-t3-banner" src="https://github.com/user-attachments/assets/5e6f2430-086d-4b3d-ac5c-6919c637a510" />
+<img width="750" alt="wannabe-t3-banner" src="https://github.com/user-attachments/assets/23d589b3-f9ac-438e-ada4-a24fdaf58826" />
+
 
 So lets get ya started 
 1. Visit the hosted site above and git clone it
