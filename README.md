@@ -4,11 +4,12 @@ So lets get ya started
 1. Visit the hosted site above and git clone it
 2. Being a monorepo, you will "cd /apps/nextjs" and "cd /apps/expo"
 3. For nextjs, 'pnpm install'. For expo "npm install --legacy-peer-deps", then "yarn install", then you finally "npm run dev"
-4. For both, sign up, check your email.
-5. Login, nextjs -> settings (gear icon) bottom left -> api keys (open router is a default and fallback, but direct api's take priority if you use them instead). expo -> setting tab, then put in apis, again openrouter is the default/fallback, but direct has priority in use)
-6. You then can browse and choose the different models to prompt
-7. prompt
-8. profit.
+4. Be sure to get your supabase links and put them into expos .env or just use the one from the supabase util in nextjs.
+5. For both, sign up, check your email.
+6. Login, nextjs -> settings (gear icon) bottom left -> api keys (open router is a default and fallback, but direct api's take priority if you use them instead). expo -> setting tab, then put in apis, again openrouter is the default/fallback, but direct has priority in use)
+7. You then can browse and choose the different models to prompt
+8. prompt
+9. profit.
 
 Im still working on this so i know the mobile app is not polished and much buggier than the web app, and the web app isnt published because i used t3-turbo trying to learn something and it does a full CI, which is lint, format, and typescript (i see im wet behind the ears and will have to fix all of that). 
 
