@@ -1,3 +1,45 @@
+# Wannabe t3
+
+So lets get ya started 
+1. Visit the hosted site above and git clone it
+2. Being a monorepo, you will "cd /apps/nextjs" and "cd /apps/expo"
+3. For nextjs, 'pnpm install'. For expo "npm install --legacy-peer-deps", then "yarn install", then you finally "npm run dev"
+4. For both, sign up, check your email.
+5. Login, nextjs -> settings (gear icon) bottom left -> api keys (open router is a default and fallback, but direct api's take priority if you use them instead). expo -> setting tab, then put in apis, again openrouter is the default/fallback, but direct has priority in use)
+6. You then can browse and choose the different models to prompt
+7. prompt
+8. profit.
+
+Im still working on this so i know the mobile app is not polished and much buggier than the web app, and the web app isnt published because i used t3-turbo trying to learn something and it does a full CI, which is lint, format, and typescript (i see im wet behind the ears and will have to fix all of that). 
+
+so you have to run locally. web app is smooth though. ill add streaming today to both devices.
+
+most setting buttons dont work in mobile. I'll actually do that tomorrow, thats ironically easy. so maybe tonight but i have other issues more pressing like the CI.
+
+im also going to add some eleven labs or cheaper TTS and a new animation for when you transcribe. Voice is the touch for the agents like for devices. 
+
+yep thats my spill. i feel good to have done this all in 24 hours really or less. cant say more time wouldve helped but it wouldve cuz i alwasy crunch time. i do have more ideas that i want to add so i will be having fun with this. 
+
+:P - J'mari Wyatt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # create-t3-turbo
 
 > [!NOTE]
